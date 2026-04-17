@@ -551,10 +551,16 @@ print(f"Building Keyword Index with {len(keyword_documents)} documents...")
 # -----------------------------------------------------------------------------
 keyword_index = KeywordTableIndex.from_documents(keyword_documents)
 
+# Show the extracted keyword table (inverted index)
+keyword_table = keyword_index.index_struct.table
+print(f"\n✓ Extracted {len(keyword_table)} unique keywords:")
+for keyword, node_ids in sorted(keyword_table.items()):
+    print(f"  '{keyword}' → {len(node_ids)} document(s)")
+
 # Create query engine
 keyword_query_engine = keyword_index.as_query_engine()
 
-print("✓ Created keyword table index")
+print("\n✓ Created keyword table index")
 print(f"\nQuery: '{query}'")
 
 # Query process:
