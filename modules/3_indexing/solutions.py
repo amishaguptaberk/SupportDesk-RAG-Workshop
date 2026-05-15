@@ -94,7 +94,7 @@ response_3 = engine_3.query(query)
 print(f"\nWith similarity_top_k=3:")
 print(f"  Answer: {str(response_3)[:150]}...")
 print(f"  Sources: {len(response_3.source_nodes)} documents used")
-for i, node in enumerate(response_3.source_nodes[:2], 1):
+for i, node in enumerate(response_3.source_nodes[:3], 1):
     print(f"    Source {i}: [{node.metadata.get('ticket_id', '?')}] {node.text[:50]}...")
 
 # top_k = 5 (changed)
@@ -103,7 +103,7 @@ response_5 = engine_5.query(query)
 print(f"\nWith similarity_top_k=5:")
 print(f"  Answer: {str(response_5)[:150]}...")
 print(f"  Sources: {len(response_5.source_nodes)} documents used")
-for i, node in enumerate(response_5.source_nodes[:2], 1):
+for i, node in enumerate(response_5.source_nodes[:5], 1):
     print(f"    Source {i}: [{node.metadata.get('ticket_id', '?')}] {node.text[:80]}...")
 
 
