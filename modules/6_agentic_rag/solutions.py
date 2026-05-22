@@ -507,7 +507,7 @@ evaluation_cases = [
     {"query": "Show ticket TICK-001", "expected_tool": "GetTicketByID"},
     {"query": "How many tickets?", "expected_tool": "GetTicketStatistics"},
     {"query": "All payment tickets", "expected_tool": "SearchByCategory"},
-    {"query": "How many critical tickets are there?", "expected_tool": "GetTicketStatistics"},
+    {"query": "How many critical tickets are there?", "expected_tool": "SearchByPriority"},
 ]
 
 correct = 0
