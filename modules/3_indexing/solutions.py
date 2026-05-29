@@ -258,6 +258,7 @@ for query in keyword_queries:
     response = keyword_engine.query(query)
     print(f"\nKeyword query: '{query}'")
     print(f"  Answer: {str(response)[:150]}...")
+    print(":==============================================:")
 
 # Disable keyword retriever logging
 logging.getLogger("llama_index.core.indices.keyword_table.retrievers").setLevel(logging.WARNING)
