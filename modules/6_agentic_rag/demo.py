@@ -308,6 +308,7 @@ Before each tool call, provide a short public rationale in content using this ex
             tool_input = tool_call["args"].get("input", "")
             
             print(f"\n🔧 Calling tool: {tool_name}")
+            print(f"   Input: {tool_input}")
             
             tool_output = None
             for tool in tools:
@@ -318,6 +319,8 @@ Before each tool call, provide a short public rationale in content using this ex
             if tool_output is None:
                 tool_output = f"Error: Tool {tool_name} not found"
             
+            print(f"   Output: {tool_output[:200]}...")
+
             messages.append(ToolMessage(
                 content=tool_output,
                 tool_call_id=tool_call["id"]
