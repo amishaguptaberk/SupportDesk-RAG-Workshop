@@ -391,7 +391,7 @@ for query in multi_step_queries:
 # Exercise 7: Interactive Conversation Loop
 # ============================================================================
 print("\n" + "=" * 80)
-print("EXERCISE 7: Interactive Chat (Simulated)")
+print("EXERCISE 7: Interactive Chat (Simulated) [without chat history]")
 print("=" * 80)
 
 # Simulated conversation
