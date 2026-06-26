@@ -145,6 +145,8 @@ print("=" * 80)
 
 test_query = "Payment processing failures"
 
+print(f"\nQuery: {test_query}")
+
 # Test different k values
 for k in [1, 3, 5, 10]:
     retriever_k = vector_store.as_retriever(search_kwargs={"k": k})
