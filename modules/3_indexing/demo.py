@@ -372,16 +372,16 @@ for i, node in enumerate(summary_response.source_nodes[:3], 1):
 #   │   [Auth Issues]    [Performance]      [Billing]        │
 #   │     (summary)        (summary)         (summary)       │
 #   │        │                 │                 │           │
-#   │   ┌────┼────┐    ┌───────┼───────┐     ┌──┴──┐        │
-#   │   ▼         ▼    ▼       ▼       ▼     ▼     ▼        │
-#   │ [T-1]    [T-5] [T-7]   [T-9]  [T-12] [T-20] [T-25]   │
+#   │   ┌────┼────┐    ┌───────┼───────┐      ┌──┴──┐        │
+#   │   ▼         ▼    ▼       ▼       ▼      ▼     ▼        │
+#   │ [T-1]    [T-5] [T-7]   [T-9]  [T-12]   [T-20] [T-25]   │
 #   │ (leaf)  (leaf) (leaf)  (leaf)  (leaf) (leaf) (leaf)    │
 #   │                                                        │
 #   │ Query: "auth issues after password reset"              │
 #   │   child_branch_factor=1:                               │
-#   │     Root → Auth Issues (best) → T-1 (best leaf)       │
+#   │     Root → Auth Issues (best) → T-1 (best leaf)        │
 #   │   child_branch_factor=2:                               │
-#   │     Root → Auth + Perf → T-1, T-5, T-7, T-9           │
+#   │     Root → Auth + Perf → T-1, T-5, T-7, T-9            │
 #   └────────────────────────────────────────────────────────┘
 #
 # WHY IT'S EFFICIENT:
