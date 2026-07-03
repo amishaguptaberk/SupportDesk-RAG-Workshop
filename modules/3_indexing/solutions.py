@@ -332,6 +332,8 @@ print("=" * 80)
 
 query = "system problem"
 
+print(f"\n>> Query: '{query}'")
+
 # Without filter
 print("\nWithout filter:")
 response = vector_index.as_query_engine(similarity_top_k=3).query(query)
