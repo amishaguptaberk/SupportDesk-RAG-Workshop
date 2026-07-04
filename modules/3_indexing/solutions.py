@@ -417,13 +417,13 @@ for i, node in enumerate(keyword_nodes[:3], 1):
 # Simple hybrid: combine and deduplicate
 seen = set()
 hybrid_results = []
-for node in vector_nodes + keyword_nodes:
+for node in vector_nodes[:3] + keyword_nodes[:3]:
     ticket_id = node.node.metadata.get('ticket_id')
     if ticket_id and ticket_id not in seen:
         seen.add(ticket_id)
         hybrid_results.append(ticket_id)
 
-print(f"\nHybrid Results (combined): {hybrid_results[:5]}")
+print(f"\nHybrid Results (combined): {hybrid_results}")
 
 
 # ============================================================================
