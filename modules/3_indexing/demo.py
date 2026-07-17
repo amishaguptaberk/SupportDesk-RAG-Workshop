@@ -247,16 +247,16 @@ for i, node in enumerate(vector_response.source_nodes, 1):
 #   ┌──────────────────────────────────────────────────┐
 #   │  Query: "auth issues after password reset"       │
 #   │                                                  │
-#   │  Doc 1 → [LLM: Relevant?] → YES ────┐           │
-#   │  Doc 2 → [LLM: Relevant?] → NO      │           │
-#   │  Doc 3 → [LLM: Relevant?] → YES ────┤           │
-#   │  Doc 4 → [LLM: Relevant?] → NO      │           │
-#   │  ...                                │           │
-#   │  Doc N → [LLM: Relevant?] → YES ────┤           │
-#   │                                     ▼           │
-#   │                              [Synthesize]       │
-#   │                                     │           │
-#   │                                  Answer         │
+#   │  Doc 1 → [LLM: Relevant?] → YES ────┐            │
+#   │  Doc 2 → [LLM: Relevant?] → NO      │            │
+#   │  Doc 3 → [LLM: Relevant?] → YES ────┤            │
+#   │  Doc 4 → [LLM: Relevant?] → NO      │            │
+#   │  ...                                │            │
+#   │  Doc N → [LLM: Relevant?] → YES ────┤            │
+#   │                                     ▼            │
+#   │                              [Synthesize]        │
+#   │                                     │            │
+#   │                                  Answer          │
 #   └──────────────────────────────────────────────────┘
 #
 # WHY IT'S SLOW:
@@ -499,15 +499,15 @@ for i, node in enumerate(tree_response.source_nodes[:3], 1):
 #   ┌────────────────────────────────────────────────┐
 #   │  Keyword Table (Inverted Index)                │
 #   │                                                │
-#   │  "password"  →  [T-1, T-5, T-12]              │
-#   │  "login"     →  [T-1, T-3, T-8]               │
-#   │  "timeout"   →  [T-7, T-15]                   │
-#   │  "billing"   →  [T-20, T-25]                  │
-#   │  "API"       →  [T-30, T-35, T-42]            │
+#   │  "password"  →  [T-1, T-5, T-12]               │
+#   │  "login"     →  [T-1, T-3, T-8]                │
+#   │  "timeout"   →  [T-7, T-15]                    │
+#   │  "billing"   →  [T-20, T-25]                   │
+#   │  "API"       →  [T-30, T-35, T-42]             │
 #   │                                                │
 #   │  Query: "password reset after login"           │
 #   │         └─→ Keywords: {password, login}        │
-#   │         └─→ Match: T-1 (both keywords!)       │
+#   │         └─→ Match: T-1 (both keywords!)        │
 #   └────────────────────────────────────────────────┘
 #
 # KEY LIMITATION - No Semantic Understanding:

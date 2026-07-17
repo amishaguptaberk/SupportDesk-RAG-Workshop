@@ -108,6 +108,7 @@ print("EXERCISE 3: Adjust Number of Results")
 print("=" * 80)
 
 query = "Authentication problems"
+print(f"\nQuery: '{query}'")
 
 # k=3 (original)
 results_3 = store.similarity_search(query, k=3)
@@ -138,6 +139,8 @@ chroma_store = Chroma.from_documents(
 
 categories = ["Authentication", "Database", "Performance", "Email"]
 query = "system not working"
+
+print(f"\nQuery: '{query}'")
 
 for category in categories:
     try:
