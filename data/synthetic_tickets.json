@@ -198,5 +198,455 @@
     "priority": "High",
     "created_date": "2024-03-01",
     "resolved_date": "2024-03-02"
+  },
+  {
+    "ticket_id": "TICK-021",
+    "title": "OAuth access tokens expiring without refresh",
+    "description": "Users logged out mid-session when using Google OAuth. Access tokens expire after 1 hour but refresh tokens are not being used to obtain new ones. Users must re-authenticate from scratch.",
+    "resolution": "Refresh token flow was never implemented; only the initial access token was stored. Added refresh token persistence and a background job to silently exchange refresh tokens before expiry. Added retry on 401 to trigger refresh before failing the request.",
+    "category": "Authentication",
+    "priority": "High",
+    "created_date": "2024-03-04",
+    "resolved_date": "2024-03-05"
+  },
+  {
+    "ticket_id": "TICK-022",
+    "title": "Checkout API p99 latency spiking to 8 seconds",
+    "description": "Checkout endpoint p99 latency climbed from 400ms to 8s during evening peak. p50 remains healthy. Tail latency causing cart abandonment. No errors, just slow responses.",
+    "resolution": "Synchronous call to an external tax service had no timeout and was blocking the request thread under load. Made the tax lookup async with a 1.5s timeout and a cached fallback rate. p99 dropped back to 600ms.",
+    "category": "Performance",
+    "priority": "Critical",
+    "created_date": "2024-03-06",
+    "resolved_date": "2024-03-07"
+  },
+  {
+    "ticket_id": "TICK-023",
+    "title": "CPU pegged at 100% on image resize endpoint",
+    "description": "Two app servers running at 100% CPU whenever the image resize endpoint is hit heavily. Requests queue and time out. Started after a marketing campaign drove upload volume up 5x.",
+    "resolution": "Image resizing was happening synchronously on the request thread. Moved resize work to a background queue with a worker pool and returned a placeholder until processing completed. Added a CDN cache for resized variants. CPU back under 40%.",
+    "category": "Performance",
+    "priority": "High",
+    "created_date": "2024-03-08",
+    "resolved_date": "2024-03-09"
+  },
+  {
+    "ticket_id": "TICK-024",
+    "title": "Initial page load slow due to large JS bundle",
+    "description": "First contentful paint taking 6+ seconds on the marketing site. Lighthouse flags a 4MB JavaScript bundle. Mobile users on slower connections affected most.",
+    "resolution": "Entire app was shipped as a single bundle with no code splitting. Implemented route-based code splitting and lazy loading, tree-shook unused dependencies, and enabled gzip/brotli compression. Bundle reduced to 600KB initial, FCP down to 1.4s.",
+    "category": "Performance",
+    "priority": "Medium",
+    "created_date": "2024-03-10",
+    "resolved_date": "2024-03-11"
+  },
+  {
+    "ticket_id": "TICK-025",
+    "title": "API pagination returning duplicate and missing records",
+    "description": "Clients paginating through the orders list endpoint see some records twice and others skipped. Happens when new orders are created during pagination. Offset-based paging assumed a stable list.",
+    "resolution": "Offset pagination is unstable when the underlying set changes. Switched to cursor-based (keyset) pagination using created_at plus id as the cursor. Records no longer shift between pages. Documented the cursor contract for API consumers.",
+    "category": "API",
+    "priority": "High",
+    "created_date": "2024-03-12",
+    "resolved_date": "2024-03-13"
+  },
+  {
+    "ticket_id": "TICK-026",
+    "title": "Deprecated API v1 still receiving heavy traffic",
+    "description": "API v1 was scheduled for shutdown but still serves 40% of traffic. Some integrations never migrated to v2. Maintaining both versions is causing bugs to diverge.",
+    "resolution": "No usage telemetry existed to identify which clients still used v1. Added per-client version metrics, contacted the top integrators, and set a hard sunset date with Sunset HTTP headers and warning responses. Migrated remaining clients and decommissioned v1.",
+    "category": "API",
+    "priority": "Medium",
+    "created_date": "2024-03-14",
+    "resolved_date": "2024-03-16"
+  },
+  {
+    "ticket_id": "TICK-027",
+    "title": "CORS errors blocking browser-based API calls",
+    "description": "Frontend at app.example.com getting 'No Access-Control-Allow-Origin header' errors calling api.example.com. Works from Postman but fails in the browser. Affects all preflight OPTIONS requests.",
+    "resolution": "API gateway was not handling preflight OPTIONS requests or returning CORS headers. Configured allowed origins, methods, and headers explicitly, and made the gateway short-circuit OPTIONS with a 204. Avoided wildcard origin since credentials are sent.",
+    "category": "API",
+    "priority": "High",
+    "created_date": "2024-03-17",
+    "resolved_date": "2024-03-17"
+  },
+  {
+    "ticket_id": "TICK-028",
+    "title": "Frequent deadlocks on orders table during checkout",
+    "description": "Database logging deadlock errors on the orders and inventory tables during concurrent checkouts. Transactions rolled back, users see 'please try again'. Spikes during flash sales.",
+    "resolution": "Two transactions acquired row locks in opposite order (orders then inventory vs inventory then orders). Standardized lock acquisition order across all checkout code paths and shortened transaction scope. Added retry-on-deadlock with backoff. Deadlocks eliminated.",
+    "category": "Database",
+    "priority": "Critical",
+    "created_date": "2024-03-18",
+    "resolved_date": "2024-03-19"
+  },
+  {
+    "ticket_id": "TICK-029",
+    "title": "Read replica lag causing stale data after writes",
+    "description": "Users update a profile then see old values on reload. Reads go to a replica lagging the primary by up to 10 seconds during peak write load. Inconsistent user experience.",
+    "resolution": "Read-after-write was hitting a lagging replica. Implemented read-your-writes by routing reads to the primary for a short window after a user's write, keyed by session. Also added replication lag monitoring and alerting at 2s threshold.",
+    "category": "Database",
+    "priority": "High",
+    "created_date": "2024-03-20",
+    "resolved_date": "2024-03-21"
+  },
+  {
+    "ticket_id": "TICK-030",
+    "title": "Schema migration failed halfway and left tables inconsistent",
+    "description": "A production migration adding a column and backfilling data timed out partway through. Some rows have the new column populated, others null. App now throws errors expecting the column everywhere.",
+    "resolution": "Migration ran as one long blocking transaction. Reworked into safe steps: add nullable column, backfill in batches, then add the not-null constraint. Made migrations idempotent and added a pre-deploy migration dry-run. Backfilled the missing rows.",
+    "category": "Database",
+    "priority": "Critical",
+    "created_date": "2024-03-22",
+    "resolved_date": "2024-03-23"
+  },
+  {
+    "ticket_id": "TICK-031",
+    "title": "Customers charged twice for single purchase",
+    "description": "Multiple reports of duplicate charges on the same order. Happens when users double-click the pay button or retry after a slow response. Refunds being issued manually.",
+    "resolution": "Payment endpoint was not idempotent, so retries created second charges. Added an idempotency key generated client-side per checkout and enforced server-side dedup at the payment provider. Disabled the pay button after first click. Duplicate charges stopped.",
+    "category": "Payment",
+    "priority": "Critical",
+    "created_date": "2024-03-24",
+    "resolved_date": "2024-03-25"
+  },
+  {
+    "ticket_id": "TICK-032",
+    "title": "Refunds stuck in pending state indefinitely",
+    "description": "Issued refunds show 'pending' for days and never complete. Customers calling support asking where their money is. Payment provider dashboard shows the refunds as succeeded.",
+    "resolution": "Refund status webhook from the provider was failing signature verification and being dropped, so our records never updated. Fixed the webhook secret, added a reconciliation job that polls provider status hourly, and backfilled stuck refunds.",
+    "category": "Payment",
+    "priority": "High",
+    "created_date": "2024-03-26",
+    "resolved_date": "2024-03-27"
+  },
+  {
+    "ticket_id": "TICK-033",
+    "title": "Subscription renewals failing silently",
+    "description": "Recurring subscriptions not renewing; users lose access without warning. No error surfaced to users or support. Affects cards that need re-authentication under new regulations.",
+    "resolution": "Renewals failing on SCA/3DS challenges were not handled, just dropped. Added handling for 'requires action' status with email prompts for customers to re-authenticate, plus dunning retries over several days before cancellation. Recovered most failed renewals.",
+    "category": "Payment",
+    "priority": "High",
+    "created_date": "2024-03-28",
+    "resolved_date": "2024-03-29"
+  },
+  {
+    "ticket_id": "TICK-034",
+    "title": "Android push notifications not delivered",
+    "description": "Android users not receiving push notifications while iOS works fine. FCM console shows messages accepted. Notifications never reach the device tray. Started after an Android 14 update.",
+    "resolution": "Android 14 enforced notification permission and stricter background limits; the app never requested POST_NOTIFICATIONS at runtime. Added the runtime permission request and a high-priority FCM channel for time-sensitive alerts. Delivery restored.",
+    "category": "Mobile",
+    "priority": "High",
+    "created_date": "2024-03-30",
+    "resolved_date": "2024-03-31"
+  },
+  {
+    "ticket_id": "TICK-035",
+    "title": "App sluggish and crashing on older Android devices",
+    "description": "Users on devices with 2GB RAM report freezing and out-of-memory crashes when scrolling image-heavy lists. Newer devices unaffected. Crashlytics shows OOM in the image loader.",
+    "resolution": "Full-resolution images were decoded into memory for list thumbnails. Switched to a library with downsampling and memory/disk caching, recycled bitmaps, and limited concurrent decodes. Memory footprint dropped sharply; OOM crashes resolved.",
+    "category": "Mobile",
+    "priority": "Medium",
+    "created_date": "2024-04-01",
+    "resolved_date": "2024-04-02"
+  },
+  {
+    "ticket_id": "TICK-036",
+    "title": "Deep links opening home screen instead of target content",
+    "description": "Marketing deep links and email links open the app but always land on the home screen rather than the intended product page. Affects both iOS Universal Links and Android App Links.",
+    "resolution": "App was launching before link routing was initialized, so the deferred link was lost. Stored the incoming link and processed it after navigation was ready. Fixed the apple-app-site-association and assetlinks.json files that were misconfigured. Deep links now route correctly.",
+    "category": "Mobile",
+    "priority": "Medium",
+    "created_date": "2024-04-03",
+    "resolved_date": "2024-04-04"
+  },
+  {
+    "ticket_id": "TICK-037",
+    "title": "Marketing emails consistently landing in spam",
+    "description": "Newsletter and promo emails going to spam for most recipients. Transactional emails deliver fine. Open rates dropped sharply. Sender reputation appears degraded.",
+    "resolution": "Marketing and transactional mail shared one sending domain, so promo spam complaints hurt transactional deliverability. Split onto separate subdomains with their own DKIM, warmed the marketing IP, added one-click unsubscribe, and pruned inactive recipients.",
+    "category": "Email",
+    "priority": "Medium",
+    "created_date": "2024-04-05",
+    "resolved_date": "2024-04-07"
+  },
+  {
+    "ticket_id": "TICK-038",
+    "title": "Email attachments being stripped in transit",
+    "description": "PDF invoices attached to emails arrive with the attachment missing. Body text is intact. Some recipients get the file, others do not. Inconsistent across mail providers.",
+    "resolution": "Attachments exceeded the provider's inline size limit and MIME boundaries were malformed by a custom email builder. Switched to a well-tested MIME library, hosted large files behind signed links instead of attaching, and kept attachments under the size limit.",
+    "category": "Email",
+    "priority": "Medium",
+    "created_date": "2024-04-08",
+    "resolved_date": "2024-04-09"
+  },
+  {
+    "ticket_id": "TICK-039",
+    "title": "No handling for bounced emails, sending to dead addresses",
+    "description": "System keeps emailing addresses that hard-bounce, hurting sender reputation. No bounce processing exists. Some users have closed accounts but still receive attempts.",
+    "resolution": "Bounce and complaint notifications from the provider were ignored. Added a webhook consumer to capture bounces and complaints, suppress hard-bounced addresses, and flag accounts. Implemented a suppression list checked before every send. Reputation recovered.",
+    "category": "Email",
+    "priority": "High",
+    "created_date": "2024-04-10",
+    "resolved_date": "2024-04-11"
+  },
+  {
+    "ticket_id": "TICK-040",
+    "title": "Search results poorly ranked, relevant items buried",
+    "description": "Users search for obvious product names and the exact match appears on page 3. Less relevant items rank higher. Complaints that search 'feels broken' even though it returns results.",
+    "resolution": "Default scoring weighted all fields equally. Boosted title and SKU fields over description, added exact-match and phrase boosting, and incorporated popularity as a tie-breaker. Tuned with a labeled relevance set. Top result now matches intent in most queries.",
+    "category": "Search",
+    "priority": "High",
+    "created_date": "2024-04-12",
+    "resolved_date": "2024-04-13"
+  },
+  {
+    "ticket_id": "TICK-041",
+    "title": "Autocomplete suggestions slow and laggy",
+    "description": "Search-as-you-type suggestions take 800ms+ to appear, lagging behind keystrokes. Users finish typing before suggestions load. Backed by a full search query per keystroke.",
+    "resolution": "Each keystroke fired a full-text query with no debounce. Added 150ms client debounce, a dedicated edge-ngram suggestion index, and request cancellation for stale keystrokes. Cached popular prefixes. Suggestion latency dropped under 80ms.",
+    "category": "Search",
+    "priority": "Medium",
+    "created_date": "2024-04-14",
+    "resolved_date": "2024-04-15"
+  },
+  {
+    "ticket_id": "TICK-042",
+    "title": "Search returns nothing on minor typos",
+    "description": "A single-character typo like 'invoce' returns zero results instead of 'invoice'. Users expect typo tolerance. High exit rate on no-result searches.",
+    "resolution": "Search used exact term matching with no fuzziness. Enabled fuzzy matching with edit-distance tuned by term length, added common synonyms, and a 'did you mean' suggestion on low result counts. No-result searches dropped by more than half.",
+    "category": "Search",
+    "priority": "Medium",
+    "created_date": "2024-04-16",
+    "resolved_date": "2024-04-17"
+  },
+  {
+    "ticket_id": "TICK-043",
+    "title": "Upload progress bar freezes at 99 percent",
+    "description": "Large file uploads show progress to 99% then hang for a long time before completing or failing. Users assume it is broken and cancel. Files are eventually stored.",
+    "resolution": "Progress tracked bytes sent to the proxy, but the long server-side step (virus scan and move to storage) happened after upload with no feedback. Added a post-upload processing phase to the progress UI and streamed status updates. Perceived hang eliminated.",
+    "category": "File Upload",
+    "priority": "Medium",
+    "created_date": "2024-04-18",
+    "resolved_date": "2024-04-19"
+  },
+  {
+    "ticket_id": "TICK-044",
+    "title": "File type validation rejecting valid files and accepting bad ones",
+    "description": "Valid .docx files rejected as 'invalid type' while some renamed executables are accepted. Validation relies on the file extension only. Security and usability concern.",
+    "resolution": "Validation trusted the client-supplied extension. Switched to magic-number/content sniffing to detect real MIME type, maintained an allowlist of permitted types, and rejected mismatches between extension and content. Valid files accepted, disguised files blocked.",
+    "category": "File Upload",
+    "priority": "High",
+    "created_date": "2024-04-20",
+    "resolved_date": "2024-04-21"
+  },
+  {
+    "ticket_id": "TICK-045",
+    "title": "Multipart uploads fail on network retry",
+    "description": "Uploads over flaky connections fail and cannot resume; the whole file restarts. Large uploads almost never complete on mobile networks. Wasted bandwidth on retries.",
+    "resolution": "Uploads were single-request with no resumability. Adopted chunked multipart upload to object storage with per-part retries and a resume manifest, so only failed parts re-send. Added client-side chunk checksums. Large mobile uploads now succeed reliably.",
+    "category": "File Upload",
+    "priority": "Medium",
+    "created_date": "2024-04-22",
+    "resolved_date": "2024-04-23"
+  },
+  {
+    "ticket_id": "TICK-046",
+    "title": "Report totals do not match dashboard numbers",
+    "description": "Revenue total in the daily report differs from the live dashboard by a few percent. Finance flagged the discrepancy. Both claim to use the same source data.",
+    "resolution": "Report and dashboard used different timezone boundaries and the report included refunded orders the dashboard excluded. Unified both on a single shared query with explicit timezone handling and consistent refund treatment. Numbers now reconcile exactly.",
+    "category": "Reporting",
+    "priority": "High",
+    "created_date": "2024-04-24",
+    "resolved_date": "2024-04-25"
+  },
+  {
+    "ticket_id": "TICK-047",
+    "title": "Report timestamps in wrong timezone",
+    "description": "Scheduled reports show event times in UTC while users expect local time. Daily cutoffs land at odd hours, splitting a business day across two reports. Confusing for regional teams.",
+    "resolution": "Timestamps were rendered in server UTC with no conversion. Stored all times in UTC but rendered in each recipient's configured timezone, and aligned daily report boundaries to the account's local midnight. Added a timezone label to every report.",
+    "category": "Reporting",
+    "priority": "Medium",
+    "created_date": "2024-04-26",
+    "resolved_date": "2024-04-27"
+  },
+  {
+    "ticket_id": "TICK-048",
+    "title": "PDF export of reports producing blank pages",
+    "description": "Exporting a report to PDF yields a document with correct headers but blank body where charts and tables should be. HTML version renders fine in the browser.",
+    "resolution": "The headless PDF renderer captured the page before async chart data finished loading. Added an explicit wait for a render-complete signal before printing, inlined fonts and assets, and increased the render timeout. Charts and tables now appear in the PDF.",
+    "category": "Reporting",
+    "priority": "Medium",
+    "created_date": "2024-04-28",
+    "resolved_date": "2024-04-29"
+  },
+  {
+    "ticket_id": "TICK-049",
+    "title": "Slack integration stopped posting notifications",
+    "description": "Alerts that used to post to Slack channels silently stopped. No errors shown to users. Other integrations work. Started around the time Slack deprecated legacy tokens.",
+    "resolution": "Integration used a deprecated legacy Slack token that was revoked. Migrated to a Slack app with OAuth and granular scopes, stored the new bot token securely, and added health checks that alert if posting fails. Notifications restored.",
+    "category": "Integration",
+    "priority": "Medium",
+    "created_date": "2024-04-30",
+    "resolved_date": "2024-05-01"
+  },
+  {
+    "ticket_id": "TICK-050",
+    "title": "Salesforce sync creating duplicate contacts",
+    "description": "Two-way sync with Salesforce creating duplicate contact records on both sides. Each sync cycle multiplies duplicates. Sales team data getting polluted.",
+    "resolution": "Sync matched only on internal id and had no external-id mapping, so records created in Salesforce were re-imported as new. Added a stable external-id field on both systems, upsert-by-external-id logic, and a loop-prevention flag for sync-originated changes. Deduplicated existing records.",
+    "category": "Integration",
+    "priority": "High",
+    "created_date": "2024-05-02",
+    "resolved_date": "2024-05-04"
+  },
+  {
+    "ticket_id": "TICK-051",
+    "title": "Incoming webhook signature verification rejecting valid events",
+    "description": "Webhooks from a partner are being rejected as having invalid signatures, but the partner confirms they are signing correctly. All events from this partner fail verification.",
+    "resolution": "Signature was computed over the parsed and re-serialized JSON body, which differed byte-for-byte from the raw payload the partner signed. Captured and verified against the raw request body before parsing, and matched the exact HMAC algorithm. Valid events now accepted.",
+    "category": "Integration",
+    "priority": "High",
+    "created_date": "2024-05-05",
+    "resolved_date": "2024-05-06"
+  },
+  {
+    "ticket_id": "TICK-052",
+    "title": "Large data exports timing out before completing",
+    "description": "Exports of large datasets hit the 30-second request timeout and fail with no file produced. Smaller exports work. Users with big accounts cannot export at all.",
+    "resolution": "Export ran synchronously within the HTTP request. Moved it to an async background job that streams results to object storage and emails a signed download link when ready. Added progress status and chunked streaming to bound memory. Large exports now complete.",
+    "category": "Export",
+    "priority": "High",
+    "created_date": "2024-05-07",
+    "resolved_date": "2024-05-08"
+  },
+  {
+    "ticket_id": "TICK-053",
+    "title": "JSON export missing nested fields",
+    "description": "Exported JSON omits nested objects like line items and addresses that appear in the UI. Top-level fields export correctly. Downstream consumers missing critical data.",
+    "resolution": "The export serializer used a shallow field allowlist that never included nested relations. Expanded the serializer to eager-load and include nested objects, versioned the export schema, and added a test asserting parity between API and export payloads.",
+    "category": "Export",
+    "priority": "Medium",
+    "created_date": "2024-05-09",
+    "resolved_date": "2024-05-10"
+  },
+  {
+    "ticket_id": "TICK-054",
+    "title": "Exports including soft-deleted records",
+    "description": "Data exports contain records users had deleted. Soft-deleted rows should be excluded. Compliance flagged this for data that should no longer appear.",
+    "resolution": "Export query bypassed the default scope that filters soft-deleted rows. Added the deleted_at IS NULL filter to the export path, audited other raw queries for the same gap, and added a regression test. Soft-deleted records no longer appear in exports.",
+    "category": "Export",
+    "priority": "High",
+    "created_date": "2024-05-11",
+    "resolved_date": "2024-05-12"
+  },
+  {
+    "ticket_id": "TICK-055",
+    "title": "WebSocket connections dropping repeatedly on mobile",
+    "description": "Mobile clients lose their realtime connection every minute or two and miss live updates while reconnecting. Desktop is stable. Worse on cellular networks.",
+    "resolution": "Idle connections were closed by mobile carrier NAT and a proxy with a short idle timeout. Added application-level ping/pong heartbeats below the timeout, exponential-backoff reconnect with state resync, and message buffering during brief disconnects. Connections now stable.",
+    "category": "Real-time",
+    "priority": "High",
+    "created_date": "2024-05-13",
+    "resolved_date": "2024-05-14"
+  },
+  {
+    "ticket_id": "TICK-056",
+    "title": "User presence status stuck showing online",
+    "description": "Users who closed the app still show as online to others for a long time. Presence never clears. Misleads people into messaging unavailable users.",
+    "resolution": "Presence relied only on an explicit disconnect event that mobile clients often never send. Switched to heartbeat-based presence with a TTL in Redis that expires if no heartbeat arrives, plus immediate cleanup on clean disconnects. Stale online status resolved.",
+    "category": "Real-time",
+    "priority": "Medium",
+    "created_date": "2024-05-15",
+    "resolved_date": "2024-05-16"
+  },
+  {
+    "ticket_id": "TICK-057",
+    "title": "Live updates reaching only some users in a shared channel",
+    "description": "In shared documents, some collaborators see live edits while others do not until they refresh. Inconsistent within the same session. Connection appears healthy for all.",
+    "resolution": "Realtime servers were horizontally scaled but did not share subscription state, so a publish on one node never reached subscribers on another. Added a Redis pub/sub backplane so messages fan out across all nodes. All collaborators now receive updates.",
+    "category": "Real-time",
+    "priority": "High",
+    "created_date": "2024-05-17",
+    "resolved_date": "2024-05-18"
+  },
+  {
+    "ticket_id": "TICK-058",
+    "title": "Video transcoding jobs failing for certain formats",
+    "description": "Uploaded videos in some formats fail to transcode and never get a playable version. Common formats work. Failed jobs leave the upload in a permanent 'processing' state.",
+    "resolution": "Transcoder lacked codecs for certain input formats and crashed without updating job state. Added broader codec support, validated inputs up front with a probe step, set per-job timeouts, and moved failed jobs to a failed state with user-visible messaging plus retry.",
+    "category": "Media Processing",
+    "priority": "High",
+    "created_date": "2024-05-19",
+    "resolved_date": "2024-05-20"
+  },
+  {
+    "ticket_id": "TICK-059",
+    "title": "Audio out of sync with video after processing",
+    "description": "Processed videos play with audio drifting ahead of the picture, worsening over the clip. Source files are in sync. Affects variable-frame-rate recordings from phones.",
+    "resolution": "Variable-frame-rate source was treated as constant frame rate during transcoding, accumulating A/V drift. Normalized inputs to a constant frame rate and used proper timestamp handling during encode. Verified sync across sample devices. Drift eliminated.",
+    "category": "Media Processing",
+    "priority": "Medium",
+    "created_date": "2024-05-21",
+    "resolved_date": "2024-05-22"
+  },
+  {
+    "ticket_id": "TICK-060",
+    "title": "Photos displayed sideways after upload",
+    "description": "Portrait photos from phones display rotated 90 degrees in the app. Originals look correct in the phone gallery. Thumbnails and full views both wrong.",
+    "resolution": "Image processing dropped the EXIF orientation tag and ignored it when rendering. Applied EXIF orientation by physically rotating pixels during processing and stripped the now-redundant tag. Reprocessed affected images. Photos now display upright everywhere.",
+    "category": "Media Processing",
+    "priority": "Medium",
+    "created_date": "2024-05-23",
+    "resolved_date": "2024-05-24"
+  },
+  {
+    "ticket_id": "TICK-061",
+    "title": "Role permission changes not taking effect",
+    "description": "Admins update a user's role but the new permissions do not apply until the user logs out and back in. Causes confusion and support tickets when access seems wrong.",
+    "resolution": "Permissions were embedded in the JWT at login and cached for the token lifetime. Added a permissions version claim and server-side check so role changes invalidate cached permissions immediately, with a short token TTL and refresh. Changes now apply in real time.",
+    "category": "User Management",
+    "priority": "High",
+    "created_date": "2024-05-25",
+    "resolved_date": "2024-05-26"
+  },
+  {
+    "ticket_id": "TICK-062",
+    "title": "Team invitation links expiring before use",
+    "description": "Invited users click the invite link and see 'invitation expired' even shortly after it was sent. Resending sometimes works. Blocking new team member onboarding.",
+    "resolution": "Invite tokens had a 15-minute expiry intended for password resets, mistakenly reused for invites. Set invite expiry to 7 days, made expired links offer a self-serve resend, and separated invite and reset token configs. Onboarding unblocked.",
+    "category": "User Management",
+    "priority": "Medium",
+    "created_date": "2024-05-27",
+    "resolved_date": "2024-05-28"
+  },
+  {
+    "ticket_id": "TICK-063",
+    "title": "Bulk user import fails entirely on one bad row",
+    "description": "CSV bulk import of users aborts the whole batch if a single row has a bad email, importing nobody. Admins must find and fix one row at a time across thousands.",
+    "resolution": "Import ran as one all-or-nothing transaction. Reworked to validate all rows first, import valid rows, and return a downloadable error report of skipped rows with reasons. Made the import idempotent so it can be safely re-run. Partial imports now succeed.",
+    "category": "User Management",
+    "priority": "Medium",
+    "created_date": "2024-05-29",
+    "resolved_date": "2024-05-30"
+  },
+  {
+    "ticket_id": "TICK-064",
+    "title": "Login takes 20 seconds during peak hours",
+    "description": "Sign-in is extremely slow at peak, sometimes 20+ seconds, though it eventually succeeds. Not an auth failure, just very slow. Users assume their password is wrong and retry, worsening load.",
+    "resolution": "Password hashing work factor was set very high and ran on a saturated thread pool, so logins queued under load. Tuned the bcrypt cost to a sane target, moved hashing to a dedicated worker pool, and added a per-account login throttle to stop retry storms. Login latency back to sub-second.",
+    "category": "Authentication",
+    "priority": "High",
+    "created_date": "2024-05-31",
+    "resolved_date": "2024-06-01"
+  },
+  {
+    "ticket_id": "TICK-065",
+    "title": "Payment page times out and abandons checkout under load",
+    "description": "During sales the payment page spins and times out, and some users are unsure whether they were charged. Both a payment reliability and a performance problem at peak traffic.",
+    "resolution": "The payment page made several synchronous calls (fraud check, tax, inventory) in series with no timeouts, exceeding the gateway window under load. Parallelized independent calls, added per-call timeouts with fallbacks, and showed a definite success/failure state by reconciling against the provider. Timeouts and double-charge fears resolved.",
+    "category": "Payment",
+    "priority": "Critical",
+    "created_date": "2024-06-02",
+    "resolved_date": "2024-06-03"
   }
 ]
