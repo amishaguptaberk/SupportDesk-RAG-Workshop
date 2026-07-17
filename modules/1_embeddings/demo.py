@@ -91,7 +91,8 @@ print(f"Embedding dimension: {embedding_dim}")
 # LOAD DATA: Support Tickets
 # =============================================================================
 print("\nLoading support tickets...")
-with open('../../data/synthetic_tickets.json', 'r') as f:
+_here = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(_here, '../../data/synthetic_tickets.json'), 'r') as f:
     tickets = json.load(f)
 print(f"Loaded {len(tickets)} support tickets")
 
@@ -207,7 +208,7 @@ print("PART 2: Computing Similarity Scores")
 print("="*80)
 
 # Create a search query - this is what a user might type
-query = "Users can't login after changing password"
+query = "How to make pizza"
 print(f"\nSearch Query: '{query}'")
 
 # -----------------------------------------------------------------------------
@@ -274,7 +275,7 @@ print("PART 3: Finding Most Similar Tickets")
 print("="*80)
 
 # Get top-5 most similar tickets
-top_k = 5
+top_k = 10
 
 # np.argsort() returns indices that would sort the array (ascending)
 # [::-1] reverses to get descending order (highest similarity first)
@@ -287,6 +288,10 @@ print("-" * 80)
 for rank, idx in enumerate(top_indices, 1):
     ticket = tickets[idx]
     score = similarities[idx]
+    # Ignore tickets with similarity score less than 0.5
+    if score < 0.5:
+        continue
+    
     
     print(f"\n#{rank} - Similarity: {score:.4f}")
     print(f"Ticket ID: {ticket['ticket_id']}")
@@ -387,7 +392,7 @@ for i, score in enumerate(query_similarities):
     ax2.text(score + 0.02, i, f'{score:.3f}', va='center', fontsize=9)
 
 plt.tight_layout()
-plt.savefig('embeddings_similarity_analysis.png', dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(_here, 'embeddings_similarity_analysis.png'), dpi=150, bbox_inches='tight')
 print("✓ Visualization saved as 'embeddings_similarity_analysis.png'")
 print("\nKEY INSIGHTS FROM THIS VISUALIZATION:")
 print("  • Left heatmap: Shows TRUE pairwise similarities in 1536D space")
@@ -439,6 +444,24 @@ for test_query in test_queries:
     print(f"\nQuery: '{test_query}'")
     print(f"  → Best match: {tickets[top_idx]['title']}")
     print(f"  → Similarity: {sims[top_idx]:.4f}")
+
+# Compare two queries
+query1 = "Login authentication failed"
+query2 = "Slow database performance"
+
+print("\n" + "="*80)
+print("COMPARING TWO QUERIES")
+print("="*80)
+
+for q in [query1, query2]:
+    response = client.embeddings.create(input=[q], model=embedding_model)
+    q_emb = np.array([response.data[0].embedding])
+    sims = cosine_similarity(q_emb, embeddings)[0]
+    top_idx = np.argmax(sims)
+    
+    print(f"\nQuery: '{q}'")
+    print(f"  Best match: {tickets[top_idx]['title']}")
+    print(f"  Score: {sims[top_idx]:.4f}")
 
 # ============================================================================
 # SUMMARY
