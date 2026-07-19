@@ -55,7 +55,8 @@ print("="*80)
 # Load our support ticket dataset
 # These are relatively SHORT documents - good for demonstrating chunking concepts
 # In real scenarios, you'd chunk PDFs, articles, manuals (much longer!)
-with open('../../data/synthetic_tickets.json', 'r') as f:
+_here = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(_here, '../../data/synthetic_tickets.json'), 'r') as f:
     tickets = json.load(f)
 print(f"\nLoaded {len(tickets)} support tickets")
 
@@ -129,8 +130,8 @@ print(f"\nSample document length: {len(documents[0].page_content)} characters")
 print("\n--- Strategy 1: Fixed-Size Chunking ---")
 
 fixed_splitter = CharacterTextSplitter(
-    chunk_size=200,      # Maximum characters per chunk
-    chunk_overlap=20,    # Characters to repeat between chunks (10% overlap)
+    chunk_size=500,      # Maximum characters per chunk
+    chunk_overlap=50,    # Characters to repeat between chunks (10% overlap)
     separator="\n"       # Prefer splitting on newlines when possible
 )
 fixed_chunks = fixed_splitter.split_documents(documents)
@@ -407,7 +408,7 @@ embeddings_model = OpenAIEmbeddings(
     model=os.getenv('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small')
 )
 
-query = "Authentication problems after password reset"
+query = "Database is timing out frequently"
 
 print("\nBuilding Chroma vector store...")
 
@@ -416,7 +417,7 @@ print("\nBuilding Chroma vector store...")
 # you'd get duplicate documents (and duplicate search results!) each run
 existing_store = Chroma(
     collection_name="support_tickets",
-    persist_directory="./chroma_db"
+    persist_directory=os.path.join(_here, 'chroma_db')
 )
 existing_store.delete_collection()
 
@@ -429,7 +430,7 @@ chroma_store = Chroma.from_documents(
     documents=documents,              # Our LangChain Document objects
     embedding=embeddings_model,       # OpenAI embeddings
     collection_name="support_tickets",# Like a "table" in a database
-    persist_directory="./chroma_db"   # Save to disk for persistence
+    persist_directory=os.path.join(_here, 'chroma_db')  # Save to disk for persistence
 )
 print("✓ Chroma store created and persisted")
 
@@ -437,14 +438,13 @@ print("✓ Chroma store created and persisted")
 # Basic Similarity Search
 # -----------------------------------------------------------------------------
 print(f"\nSearching in Chroma: '{query}'")
-chroma_results = chroma_store.similarity_search(query, k=3)
+results_with_scores = chroma_store.similarity_search_with_score(query, k=3)
 
-print(f"\nTop {len(chroma_results)} results:")
-for i, doc in enumerate(chroma_results, 1):
-    print(f"\n#{i}")
+print(f"\nTop {len(results_with_scores)} results:")
+for i, (doc, score) in enumerate(results_with_scores, 1):
+    print(f"\n#{i} - Distance: {score:.4f}")
     print(f"Ticket: {doc.metadata['ticket_id']}")
     print(f"Category: {doc.metadata['category']}")
-
 # -----------------------------------------------------------------------------
 # MMR Search (Maximal Marginal Relevance)
 # -----------------------------------------------------------------------------
@@ -519,7 +519,7 @@ print(f"Query: '{query}'")
 filtered_results = chroma_store.similarity_search(
     query,
     k=3,
-    filter={"category": "Authentication"}  # Only match this category
+    filter={"category": "Email"}  # Only match this category
 )
 
 print(f"\nFiltered results ({len(filtered_results)}):")
