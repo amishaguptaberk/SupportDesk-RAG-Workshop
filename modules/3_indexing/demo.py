@@ -109,7 +109,8 @@ print("\n" + "="*80)
 print("Loading Support Tickets")
 print("="*80)
 
-with open('../../data/synthetic_tickets.json', 'r', encoding='utf-8') as f:
+_here = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(_here, '../../data/synthetic_tickets.json'), 'r', encoding='utf-8') as f:
     tickets = json.load(f)
 
 # -----------------------------------------------------------------------------
@@ -145,7 +146,7 @@ Priority: {ticket['priority']}"""
 print(f"✓ Loaded {len(documents)} support tickets")
 
 # Test query - we'll use this across all index types
-query = "How do I fix authentication issues after password reset?"
+query = "Database connection is timing out"
 print(f"\nTest Query: '{query}'")
 
 # ============================================================================
